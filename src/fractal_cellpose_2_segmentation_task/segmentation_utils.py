@@ -371,7 +371,6 @@ def segment_image(
     Returns:
         Instance segmentation label array, dtype uint32. Shape (Z, Y, X).
     """
-    print(image.shape)
     if normalize is None:
         normalize = CellposeCustomNormalizer()
     if normalize2 is None:
@@ -422,6 +421,5 @@ def segment_image(
     logger.info(
         f"[segment_image] END | shape={mask.shape} | max_label={np.max(mask)}"
     )
-    print(mask.shape)
 
     return mask.astype(np.uint32)

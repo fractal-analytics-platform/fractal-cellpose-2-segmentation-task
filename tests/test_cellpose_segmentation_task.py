@@ -33,7 +33,6 @@ def test_cellpose_segmentation_task(
     """Base test for the Cellpose segmentation task."""
     test_data_path = tmp_path / "data.zarr"
 
-    print(test_data_path)
 
     if "c" in axes:
         num_channels = shape[axes.index("c")]
@@ -65,7 +64,6 @@ def test_cellpose_segmentation_task(
     # Cellpose finds objects in the first channel, independent of axis setup.
     # For timeseries the count is multiplied by number of timepoints.
     assert np.max(label_data) > 0
-    print(np.max(label_data))
     if expected_objects is not None:
         assert np.max(label_data) == expected_objects
 
@@ -110,6 +108,5 @@ def test_cellpose_segmentation_task_masked(
     label_data = label.get_as_numpy()
     # Masked segmentation reduces the object count vs the unmasked run.
     assert np.max(label_data) > 0
-    print(np.max(label_data))
     if expected_objects is not None:
         assert np.max(label_data) == expected_objects

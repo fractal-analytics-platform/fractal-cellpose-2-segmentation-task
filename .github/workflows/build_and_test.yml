@@ -34,7 +34,7 @@ jobs:
           environments: dev
 
       - name: Check if manifest has changed
-        run: pixi run -e dev fractal-manifest check --package fractal_microsam_segmentation_task
+        run: pixi run -e dev fractal-manifest check
 
       - name: Test core library with pytest
         run: pixi run -e dev pytest tests

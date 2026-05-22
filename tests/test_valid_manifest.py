@@ -6,9 +6,9 @@ from pathlib import Path
 import requests
 from jsonschema import validate
 
-import fractal_stardist_segmentation_task
+import fractal_cellpose_2_segmentation_task
 
-PACKAGE_DIR = Path(fractal_stardist_segmentation_task.__file__).parent
+PACKAGE_DIR = Path(fractal_cellpose_2_segmentation_task.__file__).parent
 MANIFEST_FILE = PACKAGE_DIR / "__FRACTAL_MANIFEST__.json"
 with MANIFEST_FILE.open("r") as f:
     MANIFEST = json.load(f)

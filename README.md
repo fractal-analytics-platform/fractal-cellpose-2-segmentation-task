@@ -1,3 +1,3 @@
-# fractal-stardist-segmentation-task
+# fractal-cellpose-2-segmentation-task
 
-Wrapper for StarDist segmentation for Fractal
+Wrapper for Cellpose 2 segmentation for Fractal

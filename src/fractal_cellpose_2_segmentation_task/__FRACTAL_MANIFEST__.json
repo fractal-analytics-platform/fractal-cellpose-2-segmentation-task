@@ -2,23 +2,181 @@
   "manifest_version": "2",
   "task_list": [
     {
-      "name": "StarDist Segmentation",
+      "name": "Cellpose Segmentation",
       "category": "Segmentation",
       "tags": [
         "Instance Segmentation",
-        "StarDist",
+        "Cellpose",
         "Deep Learning"
       ],
       "docs_info": "### Purpose\n- Description and documentation of the Task functionality\n- Bullet points that cover main features of the tasks.\n- Can use **full** *markdown* formatting (including embedding images).\n\n### Outputs\n- Optional section on what kind of outputs the task generates. For the thresholding_task: Generates a new label image named `label_name`.\n\n### Limitations\n- List known limitations of the task (e.g. only works for certain data types).",
       "type": "parallel",
-      "executable_parallel": "stardist_segmentation_task.py",
+      "executable_parallel": "cellpose_segmentation_task.py",
       "meta_parallel": {
         "cpus_per_task": 1,
-        "mem": 4000,
+        "mem": 8000,
         "needs_gpu": true
       },
       "args_schema_parallel": {
         "$defs": {
+          "CellposeCustomNormalizer": {
+            "description": "Validator to handle different normalization scenarios for Cellpose models.",
+            "properties": {
+              "type": {
+                "default": "default",
+                "enum": [
+                  "default",
+                  "custom",
+                  "no_normalization"
+                ],
+                "title": "Type",
+                "type": "string"
+              },
+              "lower_percentile": {
+                "anyOf": [
+                  {
+                    "maximum": 100,
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Lower Percentile"
+              },
+              "upper_percentile": {
+                "anyOf": [
+                  {
+                    "maximum": 100,
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Upper Percentile"
+              },
+              "lower_bound": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Lower Bound"
+              },
+              "upper_bound": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Upper Bound"
+              }
+            },
+            "title": "CellposeCustomNormalizer",
+            "type": "object"
+          },
+          "CellposeModelParams": {
+            "description": "Advanced Cellpose model evaluation parameters.",
+            "properties": {
+              "cellprob_threshold": {
+                "default": 0.0,
+                "title": "Cellprob Threshold",
+                "type": "number"
+              },
+              "flow_threshold": {
+                "default": 0.4,
+                "title": "Flow Threshold",
+                "type": "number"
+              },
+              "anisotropy": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Anisotropy"
+              },
+              "min_size": {
+                "default": 15,
+                "title": "Min Size",
+                "type": "integer"
+              },
+              "augment": {
+                "default": false,
+                "title": "Augment",
+                "type": "boolean"
+              },
+              "net_avg": {
+                "default": false,
+                "title": "Net Avg",
+                "type": "boolean"
+              },
+              "use_gpu": {
+                "default": true,
+                "title": "Use Gpu",
+                "type": "boolean"
+              },
+              "batch_size": {
+                "default": 8,
+                "title": "Batch Size",
+                "type": "integer"
+              },
+              "invert": {
+                "default": false,
+                "title": "Invert",
+                "type": "boolean"
+              },
+              "tile": {
+                "default": true,
+                "title": "Tile",
+                "type": "boolean"
+              },
+              "tile_overlap": {
+                "default": 0.1,
+                "title": "Tile Overlap",
+                "type": "number"
+              },
+              "resample": {
+                "default": true,
+                "title": "Resample",
+                "type": "boolean"
+              },
+              "interp": {
+                "default": true,
+                "title": "Interp",
+                "type": "boolean"
+              },
+              "stitch_threshold": {
+                "default": 0.0,
+                "title": "Stitch Threshold",
+                "type": "number"
+              },
+              "do_3D": {
+                "default": true,
+                "title": "Do 3D",
+                "type": "boolean"
+              }
+            },
+            "title": "CellposeModelParams",
+            "type": "object"
+          },
           "ChannelSelectionModel": {
             "description": "Model for channel selection.",
             "properties": {
@@ -361,17 +519,6 @@
             },
             "title": "SkipCreateMaskingRoiTable",
             "type": "object"
-          },
-          "StarDistModelPreset": {
-            "description": "Pretrained StarDist model presets.",
-            "enum": [
-              "2D_versatile_fluo",
-              "2D_versatile_he",
-              "2D_paper_dsb2018",
-              "3D_demo"
-            ],
-            "title": "StarDistModelPreset",
-            "type": "string"
           }
         },
         "additionalProperties": false,
@@ -381,16 +528,29 @@
             "type": "string",
             "description": "URL to the OME-Zarr container."
           },
-          "channel": {
+          "channel_1": {
             "$ref": "#/$defs/ChannelSelectionModel",
-            "title": "Channel",
-            "description": "Select the input channel to be used for segmentation."
+            "title": "Channel 1",
+            "description": "Primary channel for segmentation (typically cytoplasm). Required."
+          },
+          "channel_2": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ChannelSelectionModel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Channel 2",
+            "description": "Optional secondary channel (typically nuclear). When provided, Cellpose is run in two-channel mode (channels=[1, 2])."
           },
           "label_name": {
-            "default": "{channel_identifier}_stardist_segmented",
+            "default": "{channel_identifier}_cellpose_segmented",
             "title": "Label Name",
             "type": "string",
-            "description": "Name of the resulting label image. Can contain a placeholder \"{channel_identifier}\" which will be replaced by the channel identifier specified in the channel parameter."
+            "description": "Name of the resulting label image. The placeholder \"{channel_identifier}\" is replaced by the identifier of channel_1."
           },
           "level_path": {
             "anyOf": [
@@ -403,13 +563,30 @@
             ],
             "default": null,
             "title": "Level Path",
-            "description": "If the OME-Zarr has multiple resolution levels, the level to use can be specified here. If not provided, the highest resolution level will be used."
+            "description": "Resolution level to use. If not provided, the highest resolution level is used."
           },
-          "stardist_model": {
-            "$ref": "#/$defs/StarDistModelPreset",
-            "default": "2D_versatile_fluo",
-            "title": "Stardist Model",
-            "description": "Pretrained StarDist model to use. Ignored when custom_model_path is provided. 2D models: \"2D_versatile_fluo\" (default), \"2D_versatile_he\", \"2D_paper_dsb2018\". 3D models: \"3D_demo\"."
+          "model_type": {
+            "default": "cyto2",
+            "enum": [
+              "cyto",
+              "nuclei",
+              "tissuenet",
+              "livecell",
+              "cyto2",
+              "general",
+              "CP",
+              "CPx",
+              "TN1",
+              "TN2",
+              "TN3",
+              "LC1",
+              "LC2",
+              "LC3",
+              "LC4"
+            ],
+            "title": "Model Type",
+            "type": "string",
+            "description": "Pretrained Cellpose model name (e.g. \"cyto2\", \"nuclei\", \"cyto3\"). Ignored when custom_model_path is provided. Default: \"cyto2\"."
           },
           "custom_model_path": {
             "anyOf": [
@@ -422,45 +599,59 @@
             ],
             "default": null,
             "title": "Custom Model Path",
-            "description": "Path to a custom StarDist model directory. The directory must contain a config.json file. When provided, this takes precedence over stardist_model. The model type (2D or 3D) is detected automatically from config.json."
+            "description": "Path to a custom Cellpose model file. When provided, takes precedence over model_type."
           },
-          "prob_thresh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Prob Thresh",
-            "description": "Probability threshold for instance detection. If None, the model's default threshold is used."
-          },
-          "nms_thresh": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Nms Thresh",
-            "description": "Non-maximum suppression threshold for instance overlap removal. If None, the model's default is used."
-          },
-          "normalize_perc_low": {
-            "default": 1.0,
-            "title": "Normalize Perc Low",
+          "diameter": {
+            "default": 30.0,
+            "title": "Diameter",
             "type": "number",
-            "description": "Lower percentile for input normalization. Pixels at or below this percentile are mapped to 0. Default: 1.0."
+            "description": "Expected object diameter in pixels. Calculated in pixels => if you change the level_path (=> image resolution), also adapt the diameter accordingly."
           },
-          "normalize_perc_high": {
-            "default": 99.8,
-            "title": "Normalize Perc High",
-            "type": "number",
-            "description": "Upper percentile for input normalization. Pixels at or above this percentile are mapped to 1. Default: 99.8."
+          "normalize": {
+            "$ref": "#/$defs/CellposeCustomNormalizer",
+            "default": {
+              "type": "default",
+              "lower_percentile": null,
+              "upper_percentile": null,
+              "lower_bound": null,
+              "upper_bound": null
+            },
+            "title": "Normalize",
+            "description": "Normalization settings for the primary channel."
+          },
+          "normalize_2": {
+            "$ref": "#/$defs/CellposeCustomNormalizer",
+            "default": {
+              "type": "default",
+              "lower_percentile": null,
+              "upper_percentile": null,
+              "lower_bound": null,
+              "upper_bound": null
+            },
+            "title": "Normalize 2",
+            "description": "Normalization settings for the secondary channel. Only used when channel_2 is provided."
+          },
+          "advanced_model_params": {
+            "$ref": "#/$defs/CellposeModelParams",
+            "default": {
+              "cellprob_threshold": 0.0,
+              "flow_threshold": 0.4,
+              "anisotropy": null,
+              "min_size": 15,
+              "augment": false,
+              "net_avg": false,
+              "use_gpu": true,
+              "batch_size": 8,
+              "invert": false,
+              "tile": true,
+              "tile_overlap": 0.1,
+              "resample": true,
+              "interp": true,
+              "stitch_threshold": 0.0,
+              "do_3D": true
+            },
+            "title": "Advanced Model Params",
+            "description": "Advanced Cellpose eval hyperparameters (flow_threshold, cellprob_threshold, etc.)."
           },
           "iterator_configuration": {
             "anyOf": [
@@ -515,12 +706,12 @@
         },
         "required": [
           "zarr_url",
-          "channel"
+          "channel_1"
         ],
         "type": "object",
-        "title": "StardistSegmentationTask"
+        "title": "CellposeSegmentationTask"
       },
-      "docs_link": "https://github.com/fractal-analytics-platform/fractal-stardist-segmentation-task"
+      "docs_link": "https://github.com/fractal-analytics-platform/fractal-cellpose-2-segmentation-task"
     }
   ],
   "has_args_schemas": true,

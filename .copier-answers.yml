@@ -7,12 +7,11 @@ include_feature_task: false
 include_image_processing_task: false
 include_segmentation_task: true
 mode: customize
-package_name: fractal_stardist_segmentation_task
+package_name: fractal_cellpose_2_segmentation_task
 project_license: BSD-3-Clause
-project_name: fractal-stardist-segmentation-task
-project_short_description: Wrapper for StarDist segmentation for Fractal
-project_url: https://github.com/fractal-analytics-platform/fractal-stardist-segmentation-task
+project_name: fractal-cellpose-2-segmentation-task
+project_short_description: Wrapper for Cellpose 2 segmentation for Fractal
+project_url: https://github.com/fractal-analytics-platform/fractal-cellpose-2-segmentation-task
 run_git_init: true
 run_pixi_init_task: true
-segmentation_task: StarDist Segmentation
-
+segmentation_task: Cellpose Segmentation

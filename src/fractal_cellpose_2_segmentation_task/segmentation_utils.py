@@ -164,10 +164,10 @@ def _load_with_retry(
             model = loader()
             if model is not None:
                 break
-        except Exception:
+        except Exception as e:
             logger.warning(
-                f"Failed to load {description} (attempt {attempt}/{max_attempts})."
-                " Retrying..."
+                f"Failed to load {description} (attempt {attempt}/{max_attempts}): "
+                f"{type(e).__name__}: {e}. Retrying..."
             )
             time.sleep(random.uniform(2, 7))
 
